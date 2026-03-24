@@ -41,25 +41,25 @@ export function DashboardHeader({ currentDate, habitsCompleted }: DashboardHeade
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 dark:border-gray-700 px-3 sm:px-4 py-3 sm:py-4 animate-fade-in backdrop-blur-md transition-all duration-200"
+        className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2 sm:py-4 animate-fade-in backdrop-blur-md transition-all duration-200"
         style={{
           backgroundColor: isDarkMode
             ? `rgba(17, 24, 39, ${headerOpacity})`
             : `rgba(255, 255, 255, ${headerOpacity})`,
         }}
       >
-        <div className="flex items-center justify-between gap-2 sm:gap-3 lg:gap-4">
-          <div className="flex items-center gap-2 min-w-0 flex-shrink">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-3 lg:gap-4">
+          <div className="flex items-center gap-1.5 min-w-0 flex-shrink">
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold leading-none text-gray-800 dark:text-white">{monthName}</h1>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <h1 className="text-base sm:text-xl lg:text-2xl font-bold leading-tight text-gray-800 dark:text-white">{monthName}</h1>
                 <Button
                   onClick={toggleDarkMode}
                   variant="ghost"
                   size="icon"
                   aria-label="Toggle theme"
                   title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                  className="h-10 w-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  className="h-8 w-8 sm:h-10 sm:w-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 >
                   {isDarkMode ? <Sun /> : <Moon />}
                 </Button>
@@ -72,18 +72,18 @@ export function DashboardHeader({ currentDate, habitsCompleted }: DashboardHeade
             <MotivationalQuotes />
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
             <div className="text-right flex-shrink-0">
               <div className="hidden sm:block text-[10px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-none mb-0.5">Habits Completed</div>
-              <div className="text-lg sm:text-2xl lg:text-3xl font-bold leading-none text-green-600 dark:text-green-400 animate-count">{habitsCompleted}</div>
+              <div className="text-base sm:text-2xl lg:text-3xl font-bold leading-none text-green-600 dark:text-green-400 animate-count">{habitsCompleted}</div>
             </div>
 
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-0.5 sm:gap-2 flex-shrink-0">
               <Button
                 onClick={() => setShowProfile(true)}
                 variant="ghost"
                 size="sm"
-                className="h-10 px-2.5 sm:h-11 sm:px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                className="h-8 px-1.5 sm:h-11 sm:px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               >
                 <User className="h-4 w-4 sm:mr-1.5" />
                 <span className="hidden md:inline">Profile</span>
@@ -92,7 +92,7 @@ export function DashboardHeader({ currentDate, habitsCompleted }: DashboardHeade
                 onClick={handleLogout}
                 variant="ghost"
                 size="sm"
-                className="h-10 px-2.5 sm:h-11 sm:px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                className="h-8 px-1.5 sm:h-11 sm:px-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               >
                 <LogOut className="h-4 w-4 sm:mr-1.5" />
                 <span className="hidden md:inline">Logout</span>
