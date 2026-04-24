@@ -11,12 +11,20 @@ import { MotivationalQuotes } from './MotivationalQuotes';
 interface DashboardHeaderProps {
   currentDate: Date;
   habitsCompleted: number;
+  isStandalonePwa?: boolean;
   isPwaMobile?: boolean;
   autoRotateEnabled?: boolean;
   onToggleAutoRotate?: () => void;
 }
 
-export function DashboardHeader({ currentDate, habitsCompleted, isPwaMobile = false, autoRotateEnabled = false, onToggleAutoRotate }: DashboardHeaderProps) {
+export function DashboardHeader({
+  currentDate,
+  habitsCompleted,
+  isStandalonePwa = false,
+  isPwaMobile = false,
+  autoRotateEnabled = false,
+  onToggleAutoRotate,
+}: DashboardHeaderProps) {
   const { logout, user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -44,7 +52,7 @@ export function DashboardHeader({ currentDate, habitsCompleted, isPwaMobile = fa
   return (
     <>
       <header 
-        className="fixed top-0 left-0 right-0 z-40 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-3 sm:py-5 animate-fade-in backdrop-blur-md transition-all duration-200"
+        className={`fixed top-0 left-0 right-0 z-40 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 ${isStandalonePwa ? 'py-3 sm:py-5' : 'py-2 sm:py-4'} animate-fade-in backdrop-blur-md transition-all duration-200`}
         style={{
           backgroundColor: isDarkMode
             ? `rgba(17, 24, 39, ${headerOpacity})`

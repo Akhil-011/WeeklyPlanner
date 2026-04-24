@@ -944,6 +944,7 @@ export function Dashboard() {
       <DashboardHeader
         currentDate={currentDate}
         habitsCompleted={totalHabitsCompleted}
+        isStandalonePwa={isStandalonePwa}
         isPwaMobile={isPwaMobile}
         autoRotateEnabled={autoRotateEnabled}
         onToggleAutoRotate={handleToggleAutoRotate}
@@ -951,7 +952,7 @@ export function Dashboard() {
 
       <MotivationalToast />
     
-      <main className="max-w-[1440px] mx-auto px-3 sm:px-4 pt-28 sm:pt-32 pb-4 sm:pb-8 space-y-4 sm:space-y-6">
+      <main className={`max-w-[1440px] mx-auto px-3 sm:px-4 ${isStandalonePwa ? 'pt-28 sm:pt-32' : 'pt-24 sm:pt-28'} pb-4 sm:pb-8 space-y-4 sm:space-y-6`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div className={`flex w-full sm:w-auto gap-2 ${isPwaMobile ? '-mx-4 w-[calc(100%+2rem)] px-4 gap-3' : ''}`}>
               <Button
