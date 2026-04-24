@@ -52,6 +52,29 @@ export function Dashboard() {
   const [overviewRefreshKey, setOverviewRefreshKey] = useState(0);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showSaveBlockedDialog, setShowSaveBlockedDialog] = useState(false);
+  const [isPwaMobile, setIsPwaMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+
+    const checkPwaMobile = () => {
+      const iosStandalone =
+        ((window.navigator as Navigator & { standalone?: boolean }).standalone ?? false) === true;
+      const isStandalone = mediaQuery.matches || iosStandalone;
+      const isMobileViewport = window.innerWidth < 640;
+      setIsPwaMobile(isStandalone && isMobileViewport);
+    };
+
+    checkPwaMobile();
+
+    mediaQuery.addEventListener?.('change', checkPwaMobile);
+    window.addEventListener('resize', checkPwaMobile);
+
+    return () => {
+      mediaQuery.removeEventListener?.('change', checkPwaMobile);
+      window.removeEventListener('resize', checkPwaMobile);
+    };
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -874,7 +897,7 @@ export function Dashboard() {
     
       <main className="max-w-[1440px] mx-auto px-3 sm:px-4 pt-24 sm:pt-28 pb-4 sm:pb-8 space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <div className="flex w-full sm:w-auto gap-2">
+            <div className={`flex w-full sm:w-auto gap-2 ${isPwaMobile ? '-mx-2 w-[calc(100%+1rem)] px-2' : ''}`}>
               <Button
                 onClick={() => setViewMode('weekly')}
                 variant={viewMode === 'weekly' ? 'default' : 'outline'}
