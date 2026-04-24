@@ -27,13 +27,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, LayoutGrid, Download, RotateCw } from 'lucide-react';
+import { Calendar, LayoutGrid, RotateCw } from 'lucide-react';
  import { toast } from 'sonner';
- 
- interface BeforeInstallPromptEvent extends Event {
-   prompt: () => Promise<void>;
-   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
- }
  
  interface ScreenOrientation extends EventTarget {
    lock: (orientation: string) => Promise<void>;
@@ -66,8 +61,6 @@ export function Dashboard() {
   const [showSaveBlockedDialog, setShowSaveBlockedDialog] = useState(false);
   const [isPwaMobile, setIsPwaMobile] = useState(false);
   const [isStandalonePwa, setIsStandalonePwa] = useState(false);
-  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isIosSafariBrowser, setIsIosSafariBrowser] = useState(false);
   const [autoRotateEnabled, setAutoRotateEnabled] = useState(false);
 
   useEffect(() => {
@@ -132,52 +125,6 @@ export function Dashboard() {
     
     const message = newState ? 'Auto-rotate enabled' : 'Auto-rotate disabled';
     toast.success(message);
-  };
-
-  useEffect(() => {
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIos = /iphone|ipad|ipod/.test(ua);
-    const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
-    setIsIosSafariBrowser(isIos && isSafari);
-
-    const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferredInstallPrompt(event as BeforeInstallPromptEvent);
-    };
-
-    const handleAppInstalled = () => {
-      setDeferredInstallPrompt(null);
-      setIsStandalonePwa(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  const handleInstallClick = async () => {
-    if (deferredInstallPrompt) {
-      await deferredInstallPrompt.prompt();
-      const choice = await deferredInstallPrompt.userChoice;
-
-      if (choice.outcome === 'accepted') {
-        toast.success('App installation started');
-      }
-
-      setDeferredInstallPrompt(null);
-      return;
-    }
-
-    if (isIosSafariBrowser && !isStandalonePwa) {
-      toast.info('Tap Share, then choose Add to Home Screen');
-      return;
-    }
-
-    toast.info('Install option is not available yet. Keep using the app for a bit and try again.');
   };
 
   useEffect(() => {
@@ -990,7 +937,7 @@ export function Dashboard() {
     return Math.round((taskPercentage + habitPercentage) / 2);
   })();
 
-  const showInstallCta = !isStandalonePwa;
+
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
@@ -1004,7 +951,7 @@ export function Dashboard() {
 
       <MotivationalToast />
     
-      <main className="max-w-[1440px] mx-auto px-3 sm:px-4 pt-24 sm:pt-28 pb-4 sm:pb-8 space-y-4 sm:space-y-6">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-4 pt-28 sm:pt-32 pb-4 sm:pb-8 space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div className={`flex w-full sm:w-auto gap-2 ${isPwaMobile ? '-mx-4 w-[calc(100%+2rem)] px-4 gap-3' : ''}`}>
               <Button
@@ -1026,17 +973,6 @@ export function Dashboard() {
                 Overview
               </Button>
             </div>
-            {showInstallCta && (
-              <Button
-                onClick={handleInstallClick}
-                variant="outline"
-                size="sm"
-                className="w-full sm:w-auto h-10"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Add to Home Screen
-              </Button>
-            )}
           </div>
 
           {viewMode === 'monthly' && (
