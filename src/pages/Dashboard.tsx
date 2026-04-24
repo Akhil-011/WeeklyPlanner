@@ -27,8 +27,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Calendar, LayoutGrid } from 'lucide-react';
-import { toast } from 'sonner';
+import { Calendar, LayoutGrid, Download, RotateCw } from 'lucide-react';
+ import { toast } from 'sonner';
+ 
+ interface BeforeInstallPromptEvent extends Event {
+   prompt: () => Promise<void>;
+   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+ }
+ 
+ interface ScreenOrientation extends EventTarget {
+   lock: (orientation: string) => Promise<void>;
+   unlock: () => void;
+   type: string;
+   angle: number;
+}
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -53,6 +65,10 @@ export function Dashboard() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showSaveBlockedDialog, setShowSaveBlockedDialog] = useState(false);
   const [isPwaMobile, setIsPwaMobile] = useState(false);
+  const [isStandalonePwa, setIsStandalonePwa] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isIosSafariBrowser, setIsIosSafariBrowser] = useState(false);
+  const [autoRotateEnabled, setAutoRotateEnabled] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
@@ -62,6 +78,7 @@ export function Dashboard() {
         ((window.navigator as Navigator & { standalone?: boolean }).standalone ?? false) === true;
       const isStandalone = mediaQuery.matches || iosStandalone;
       const isMobileViewport = window.innerWidth < 640;
+      setIsStandalonePwa(isStandalone);
       setIsPwaMobile(isStandalone && isMobileViewport);
     };
 
@@ -75,6 +92,93 @@ export function Dashboard() {
       window.removeEventListener('resize', checkPwaMobile);
     };
   }, []);
+
+  // Load auto-rotate preference from localStorage
+  useEffect(() => {
+    const savedPreference = localStorage.getItem('pwa-auto-rotate-enabled');
+    if (savedPreference !== null) {
+      setAutoRotateEnabled(JSON.parse(savedPreference));
+    }
+  }, []);
+
+  // Apply orientation lock/unlock based on user preference
+  useEffect(() => {
+    if (!isPwaMobile) return;
+
+    const applyOrientationLock = async () => {
+      try {
+        const screen = window.screen as Screen & { orientation?: ScreenOrientation };
+        if (!screen.orientation) return;
+
+        if (autoRotateEnabled) {
+          // Unlock: allow rotation
+          screen.orientation.unlock();
+        } else {
+          // Lock to portrait
+          await screen.orientation.lock('portrait-primary');
+        }
+      } catch (error) {
+        console.error('Error applying orientation lock:', error);
+      }
+    };
+
+    applyOrientationLock();
+  }, [autoRotateEnabled, isPwaMobile]);
+
+  const handleToggleAutoRotate = () => {
+    const newState = !autoRotateEnabled;
+    setAutoRotateEnabled(newState);
+    localStorage.setItem('pwa-auto-rotate-enabled', JSON.stringify(newState));
+    
+    const message = newState ? 'Auto-rotate enabled' : 'Auto-rotate disabled';
+    toast.success(message);
+  };
+
+  useEffect(() => {
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIos = /iphone|ipad|ipod/.test(ua);
+    const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
+    setIsIosSafariBrowser(isIos && isSafari);
+
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setDeferredInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredInstallPrompt(null);
+      setIsStandalonePwa(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredInstallPrompt) {
+      await deferredInstallPrompt.prompt();
+      const choice = await deferredInstallPrompt.userChoice;
+
+      if (choice.outcome === 'accepted') {
+        toast.success('App installation started');
+      }
+
+      setDeferredInstallPrompt(null);
+      return;
+    }
+
+    if (isIosSafariBrowser && !isStandalonePwa) {
+      toast.info('Tap Share, then choose Add to Home Screen');
+      return;
+    }
+
+    toast.info('Install option is not available yet. Keep using the app for a bit and try again.');
+  };
 
   useEffect(() => {
     if (user) {
@@ -886,37 +990,53 @@ export function Dashboard() {
     return Math.round((taskPercentage + habitPercentage) / 2);
   })();
 
+  const showInstallCta = !isStandalonePwa;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       <DashboardHeader
         currentDate={currentDate}
         habitsCompleted={totalHabitsCompleted}
+        isPwaMobile={isPwaMobile}
+        autoRotateEnabled={autoRotateEnabled}
+        onToggleAutoRotate={handleToggleAutoRotate}
       />
 
       <MotivationalToast />
     
       <main className="max-w-[1440px] mx-auto px-3 sm:px-4 pt-24 sm:pt-28 pb-4 sm:pb-8 space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <div className={`flex w-full sm:w-auto gap-2 ${isPwaMobile ? '-mx-2 w-[calc(100%+1rem)] px-2' : ''}`}>
+            <div className={`flex w-full sm:w-auto gap-2 ${isPwaMobile ? '-mx-4 w-[calc(100%+2rem)] px-4 gap-3' : ''}`}>
               <Button
                 onClick={() => setViewMode('weekly')}
                 variant={viewMode === 'weekly' ? 'default' : 'outline'}
                 size="sm"
-                className={`flex-1 sm:flex-none whitespace-nowrap ${viewMode === 'weekly' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                className={`flex-1 sm:flex-none whitespace-nowrap ${isPwaMobile ? 'h-12 text-base' : ''} ${viewMode === 'weekly' ? 'bg-green-600 hover:bg-green-700' : ''}`}
               >
-                <LayoutGrid className="h-4 w-4 mr-2" />
+                <LayoutGrid className={`${isPwaMobile ? 'h-5 w-5' : 'h-4 w-4'} mr-2`} />
                 Weekly View
               </Button>
               <Button
                 onClick={() => setViewMode('monthly')}
                 variant={viewMode === 'monthly' ? 'default' : 'outline'}
                 size="sm"
-                className={`flex-1 sm:flex-none whitespace-nowrap ${viewMode === 'monthly' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                className={`flex-1 sm:flex-none whitespace-nowrap ${isPwaMobile ? 'h-12 text-base' : ''} ${viewMode === 'monthly' ? 'bg-green-600 hover:bg-green-700' : ''}`}
               >
-                <Calendar className="h-4 w-4 mr-2" />
+                <Calendar className={`${isPwaMobile ? 'h-5 w-5' : 'h-4 w-4'} mr-2`} />
                 Overview
               </Button>
             </div>
+            {showInstallCta && (
+              <Button
+                onClick={handleInstallClick}
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto h-10"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Add to Home Screen
+              </Button>
+            )}
           </div>
 
           {viewMode === 'monthly' && (

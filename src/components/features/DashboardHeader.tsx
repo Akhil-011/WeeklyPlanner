@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { LogOut, User, Moon, Sun } from 'lucide-react';
+import { LogOut, User, Moon, Sun, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/hooks/useTheme';
@@ -11,9 +11,12 @@ import { MotivationalQuotes } from './MotivationalQuotes';
 interface DashboardHeaderProps {
   currentDate: Date;
   habitsCompleted: number;
+  isPwaMobile?: boolean;
+  autoRotateEnabled?: boolean;
+  onToggleAutoRotate?: () => void;
 }
 
-export function DashboardHeader({ currentDate, habitsCompleted }: DashboardHeaderProps) {
+export function DashboardHeader({ currentDate, habitsCompleted, isPwaMobile = false, autoRotateEnabled = false, onToggleAutoRotate }: DashboardHeaderProps) {
   const { logout, user } = useAuth();
   const { isDarkMode, toggleDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -73,6 +76,18 @@ export function DashboardHeader({ currentDate, habitsCompleted }: DashboardHeade
           </div>
 
           <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+            {isPwaMobile && (
+              <Button
+                onClick={onToggleAutoRotate}
+                variant="ghost"
+                size="icon"
+                aria-label="Toggle auto-rotate"
+                title={autoRotateEnabled ? 'Lock orientation' : 'Enable auto-rotate'}
+                className="h-8 w-8 sm:h-10 sm:w-10 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+              >
+                <RotateCw className={`h-4 w-4 ${autoRotateEnabled ? 'text-green-600' : ''}`} />
+              </Button>
+            )}
             <div className="text-right flex-shrink-0">
               <div className="hidden sm:block text-[10px] sm:text-xs font-medium text-gray-600 dark:text-gray-400 leading-none mb-0.5">Habits Completed</div>
               <div className="text-base sm:text-2xl lg:text-3xl font-bold leading-none text-green-600 dark:text-green-400 animate-count">{habitsCompleted}</div>
